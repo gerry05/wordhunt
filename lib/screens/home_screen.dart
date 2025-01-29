@@ -16,7 +16,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    DataStorage().storeKey('AIzaSyDChWq9EEhc0yuCtF464Zxit0GPz2burcM');
+    DataStorage().storeKey();
     DataStorage().gameGetWords();
   }
 

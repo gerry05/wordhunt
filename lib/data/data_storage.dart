@@ -6,7 +6,7 @@ import '../config/secrets.dart';
 class DataStorage {
   final storage = const FlutterSecureStorage();
 
-  Future<void> storeKey(String apiKey) async {
+  Future<void> storeKey() async {
     try {
       await storage.write(
         key: 'gemini_api_key',
