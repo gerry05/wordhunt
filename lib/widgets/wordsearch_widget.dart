@@ -47,13 +47,9 @@ class _WordSearchScreenState extends State<WordSearchScreen> {
 
   Future<void> fetchGameDataFromGemini() async {
     try {
-      final apiKey = await DataStorage().getApiKey();
-      if (apiKey == null) {
-        return;
-      }
       final model = GenerativeModel(
         model: 'gemini-2.0-flash-exp',
-        apiKey: apiKey, // Replace with your actual API key
+        apiKey: globals.geminiApiKey, // Replace with your actual API key
       );
       final prompt =
           "Generate a JSON OBJECT for 6 english words related to ${widget.category['description']}. The maximum word length is 10 characters. "

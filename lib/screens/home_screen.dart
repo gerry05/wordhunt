@@ -3,6 +3,7 @@ import 'package:wordhunt/data/data_storage.dart';
 import '../utils/categories.dart' as categories;
 import 'wordsearch_screen.dart';
 import 'package:wordhunt/globals.dart' as globals;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,8 +17,15 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    DataStorage().storeKey();
-    DataStorage().gameGetWords();
+    initLocalData();
+  }
+
+  initLocalData() async {
+    await dotenv.load();
+    var apiKey = dotenv.env['GEMINI_API_KEY'];
+
+    globals.geminiApiKey = apiKey!;
+    await DataStorage().gameGetWords();
   }
 
   @override

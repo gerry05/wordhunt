@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/wordsearch_screen.dart';
 
-void main() {
+void main() async {
   runApp(const MyApp());
 }
 
