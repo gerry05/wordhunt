@@ -27,10 +27,28 @@ jobs:
 
       - name: Deploy to GitHub Pages
         run: |
-          git config --global user.name "Gerry Albert Buala"
-          git config --global user.email "gerryalbertbuala@yahoo.com"
-          git checkout -b gh-pages
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Fetch all branches and check if gh-pages exists
+          git fetch origin gh-pages || echo "gh-pages branch does not exist yet."
+          
+          # Create gh-pages branch if it doesn't exist
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            git checkout gh-pages
+          else
+            git checkout --orphan gh-pages
+          fi
+
+          # Delete old files
+          git rm -rf . 
+
+          # Copy new web build files
           cp -r build/web/* .
+
+          # Commit and push
           git add .
           git commit -m "Deploy to GitHub Pages"
-          git push origin gh-pages --force
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/gerry05/wordhunt.git gh-pages --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
