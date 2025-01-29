@@ -119,8 +119,8 @@ class _WordSearchScreenState extends State<WordSearchScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          // content: Text("Error loading game data. Please try again later."),
-          content: Text("${e.toString()}"),
+          content: Text("Error loading game data. Please try again later."),
+          // content: Text("${e.toString()}"),
         ),
       );
     }
