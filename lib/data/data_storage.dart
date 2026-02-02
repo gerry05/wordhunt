@@ -18,8 +18,12 @@ class DataStorage {
     try {
       final words = await storage.read(key: 'storeWordsFound');
       debugPrint("Words retrieved successfully.: $words");
-      globals.storeWordsFound = words!.split(',');
-      return words.split(',');
+      if (words == null) {
+        globals.storeWordsFound = [];
+        return [];
+      }
+      globals.storeWordsFound = words.split(',');
+      return globals.storeWordsFound;
     } catch (e) {
       debugPrint("Error retrieving words: $e");
       return [];
