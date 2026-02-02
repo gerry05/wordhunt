@@ -15,7 +15,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    initLocalData();
+    initLocalData(); //
   }
 
   initLocalData() async {
