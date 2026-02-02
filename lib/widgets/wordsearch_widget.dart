@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../wordsearch_maker.dart';
@@ -11,7 +12,15 @@ import 'package:confetti/confetti.dart';
 
 class WordSearchScreen extends StatefulWidget {
   final Map<String, String> category;
-  const WordSearchScreen({super.key, required this.category});
+  final VoidCallback? onInteractionStart;
+  final VoidCallback? onInteractionEnd;
+
+  const WordSearchScreen({
+    super.key,
+    required this.category,
+    this.onInteractionStart,
+    this.onInteractionEnd,
+  });
 
   @override
   _WordSearchScreenState createState() => _WordSearchScreenState();
@@ -575,110 +584,134 @@ class _WordSearchScreenState extends State<WordSearchScreen> {
         double cellSize =
             (boardDimension - (grid[0].length * 2)) / grid[0].length;
 
-        return GestureDetector(
-          onPanStart: (details) {
-            if (remainingWords == 0) return;
-            final cell =
-                _getCellFromOffset(details.localPosition, cellSize + 2);
-            if (cell != null) {
+        return Listener(
+          onPointerDown: (_) {
+            if (remainingWords > 0) {
+              widget.onInteractionStart?.call();
+            }
+          },
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            dragStartBehavior: DragStartBehavior.down,
+            onPanStart: (details) {
+              if (remainingWords == 0) return;
+              final cell =
+                  _getCellFromOffset(details.localPosition, cellSize + 2);
+              if (cell != null) {
+                setState(() {
+                  startCell = cell;
+                  lastCell = cell;
+                  selectedCells.clear();
+                  selectedCells.add(cell);
+                  selectedLetters = grid[cell.dy.toInt()][cell.dx.toInt()];
+                  direction = null;
+                });
+              }
+            },
+            onPanUpdate: (details) {
+              if (remainingWords == 0 || startCell == null) return;
+              final cell =
+                  _getCellFromOffset(details.localPosition, cellSize + 2);
+              if (cell != null && _isValidCell(cell)) {
+                setState(() {
+                  selectedCells.add(cell);
+                  lastCell = cell;
+                  selectedLetters = getSelectedWord();
+                });
+              }
+            },
+            onPanEnd: (details) {
+              if (remainingWords == 0) {
+                widget.onInteractionEnd?.call();
+                return;
+              }
+              String selectedWord = getSelectedWord();
+              checkWord(selectedWord);
+
               setState(() {
-                startCell = cell;
-                lastCell = cell;
-                selectedCells.clear();
-                selectedCells.add(cell);
-                selectedLetters = grid[cell.dy.toInt()][cell.dx.toInt()];
+                if (!foundCells.containsAll(selectedCells)) {
+                  selectedCells.clear();
+                  selectedLetters = "";
+                }
+                startCell = null;
+                lastCell = null;
                 direction = null;
               });
-            }
-          },
-          onPanUpdate: (details) {
-            if (remainingWords == 0 || startCell == null) return;
-            final cell =
-                _getCellFromOffset(details.localPosition, cellSize + 2);
-            if (cell != null && _isValidCell(cell)) {
+              widget.onInteractionEnd?.call();
+            },
+            onPanCancel: () {
+              widget.onInteractionEnd?.call();
               setState(() {
-                selectedCells.add(cell);
-                lastCell = cell;
-                selectedLetters = getSelectedWord();
-              });
-            }
-          },
-          onPanEnd: (details) {
-            if (remainingWords == 0) return;
-            String selectedWord = getSelectedWord();
-            checkWord(selectedWord);
-
-            setState(() {
-              if (!foundCells.containsAll(selectedCells)) {
                 selectedCells.clear();
                 selectedLetters = "";
-              }
-              startCell = null;
-              lastCell = null;
-              direction = null;
-            });
-          },
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: grid.asMap().entries.map((entry) {
-                int row = entry.key;
-                List<String> cols = entry.value;
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: cols.asMap().entries.map((entry) {
-                    int col = entry.key;
-                    String letter = entry.value;
-                    Offset currentCell = Offset(col.toDouble(), row.toDouble());
-                    bool isSelected = selectedCells.contains(currentCell);
-                    bool isFound = foundCells.contains(currentCell);
+                startCell = null;
+                lastCell = null;
+                direction = null;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: grid.asMap().entries.map((entry) {
+                  int row = entry.key;
+                  List<String> cols = entry.value;
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: cols.asMap().entries.map((entry) {
+                      int col = entry.key;
+                      String letter = entry.value;
+                      Offset currentCell =
+                          Offset(col.toDouble(), row.toDouble());
+                      bool isSelected = selectedCells.contains(currentCell);
+                      bool isFound = foundCells.contains(currentCell);
 
-                    Color cellColor = Colors.transparent;
-                    Color textColor = colorScheme.onSurface;
+                      Color cellColor = Colors.transparent;
+                      Color textColor = colorScheme.onSurface;
 
-                    if (isFound) {
-                      cellColor = colorScheme.primaryContainer;
-                      textColor = colorScheme.onPrimaryContainer;
-                    }
-                    if (isSelected) {
-                      cellColor = colorScheme.secondary;
-                      textColor = colorScheme.onSecondary;
-                    }
+                      if (isFound) {
+                        cellColor = colorScheme.primaryContainer;
+                        textColor = colorScheme.onPrimaryContainer;
+                      }
+                      if (isSelected) {
+                        cellColor = colorScheme.secondary;
+                        textColor = colorScheme.onSecondary;
+                      }
 
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      width: cellSize,
-                      height: cellSize,
-                      alignment: Alignment.center,
-                      margin: const EdgeInsets.all(1),
-                      decoration: BoxDecoration(
-                        color: cellColor,
-                        borderRadius: BorderRadius.circular(8),
-                        border: isSelected || isFound
-                            ? null
-                            : Border.all(
-                                color: colorScheme.outlineVariant
-                                    .withOpacity(0.5)),
-                      ),
-                      child: Text(
-                        letter,
-                        style: TextStyle(
-                          color: textColor,
-                          fontWeight: isSelected || isFound
-                              ? FontWeight.bold
-                              : FontWeight.w500,
-                          fontSize: cellSize * 0.45,
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        width: cellSize,
+                        height: cellSize,
+                        alignment: Alignment.center,
+                        margin: const EdgeInsets.all(1),
+                        decoration: BoxDecoration(
+                          color: cellColor,
+                          borderRadius: BorderRadius.circular(8),
+                          border: isSelected || isFound
+                              ? null
+                              : Border.all(
+                                  color: colorScheme.outlineVariant
+                                      .withOpacity(0.5)),
                         ),
-                      ),
-                    );
-                  }).toList(),
-                );
-              }).toList(),
+                        child: Text(
+                          letter,
+                          style: TextStyle(
+                            color: textColor,
+                            fontWeight: isSelected || isFound
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                            fontSize: cellSize * 0.45,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
           ),
         );

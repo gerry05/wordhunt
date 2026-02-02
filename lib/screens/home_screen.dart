@@ -225,7 +225,7 @@ class _CategoryCardState extends State<_CategoryCard> {
                     child: Text(
                       widget.category['description'] ?? '',
                       textAlign: TextAlign.center,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,

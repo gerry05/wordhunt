@@ -10,6 +10,15 @@ class WordSearchGameScreen extends StatefulWidget {
 }
 
 class _WordSearchGameScreenState extends State<WordSearchGameScreen> {
+  bool _isInteracting = false;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -36,7 +45,10 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+              controller: _scrollController,
+              physics: _isInteracting
+                  ? const NeverScrollableScrollPhysics()
+                  : const BouncingScrollPhysics(),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   minHeight: constraints.maxHeight,
@@ -46,6 +58,20 @@ class _WordSearchGameScreenState extends State<WordSearchGameScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     child: WordSearchScreen(
                       category: widget.category,
+                      onInteractionStart: () {
+                        // Forcefully stop any ongoing scroll animation/momentum
+                        if (_scrollController.hasClients) {
+                          _scrollController.position.hold(() {});
+                        }
+                        setState(() {
+                          _isInteracting = true;
+                        });
+                      },
+                      onInteractionEnd: () {
+                        setState(() {
+                          _isInteracting = false;
+                        });
+                      },
                     ),
                   ),
                 ),
